@@ -90,6 +90,9 @@ class GoodDayToLearnApp:
 
         pygame.mixer.init()
         pygame.mixer.music.load("rain.mp3")  # Place a rain sound file here
+        
+        # Load alarm sound
+        self.alarm_sound = pygame.mixer.Sound("alarm.mp3")
 
     def start_timer(self):
         if not self.running:
@@ -126,6 +129,9 @@ class GoodDayToLearnApp:
 
     def handle_timer_complete(self):
         pygame.mixer.music.stop()
+        
+        # Play alarm sound when timer completes
+        self.alarm_sound.play()
         
         if not self.is_break:
             # Just finished a work interval
