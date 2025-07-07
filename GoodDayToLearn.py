@@ -17,6 +17,10 @@ class GoodDayToLearnApp:
         self.short_break_time = 5 * 60  # 5 minutes short break
         self.long_break_time = 20 * 60  # 20 minutes long break
         
+        # Volume settings
+        self.music_volume = 0.5  # Default music volume (0.0 to 1.0)
+        self.alarm_volume = 0.7  # Default alarm volume (0.0 to 1.0)
+        
         self.time_left = self.work_time
         self.current_interval = 0  # Track current interval (0-3)
         self.is_break = False  # Track if currently in break mode
@@ -90,9 +94,11 @@ class GoodDayToLearnApp:
 
         pygame.mixer.init()
         pygame.mixer.music.load("rain.mp3")  # Place a rain sound file here
+        pygame.mixer.music.set_volume(self.music_volume)  # Set initial music volume
         
         # Load alarm sound
         self.alarm_sound = pygame.mixer.Sound("alarm.mp3")
+        self.alarm_sound.set_volume(self.alarm_volume)  # Set initial alarm volume
 
     def start_timer(self):
         if not self.running:
@@ -182,7 +188,7 @@ class GoodDayToLearnApp:
     def open_settings(self):
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Settings")
-        settings_window.geometry("500x450")
+        settings_window.geometry("600x750")
         settings_window.configure(bg="#34495e")
         settings_window.resizable(False, False)
         
@@ -236,6 +242,40 @@ class GoodDayToLearnApp:
                                    bg="#ecf0f1", fg="#2c3e50")
         long_break_entry.pack(pady=5)
         
+        # Volume settings
+        volume_frame = tk.Frame(settings_frame, bg="#34495e")
+        volume_frame.pack(pady=15)
+        
+        # Music volume setting
+        music_vol_frame = tk.Frame(volume_frame, bg="#34495e")
+        music_vol_frame.pack(pady=5)
+        tk.Label(music_vol_frame, text="Music Volume:", 
+                font=("Helvetica", 12), bg="#34495e", fg="#ecf0f1").pack()
+        music_volume_scale = tk.Scale(music_vol_frame, from_=0, to=100, 
+                                     orient=tk.HORIZONTAL, 
+                                     bg="#2c3e50", fg="#ecf0f1", 
+                                     highlightthickness=0,
+                                     troughcolor="#34495e", 
+                                     activebackground="#3498db",
+                                     length=200)
+        music_volume_scale.set(int(self.music_volume * 100))
+        music_volume_scale.pack(pady=5)
+        
+        # Alarm volume setting
+        alarm_vol_frame = tk.Frame(volume_frame, bg="#34495e")
+        alarm_vol_frame.pack(pady=5)
+        tk.Label(alarm_vol_frame, text="Alarm Volume:", 
+                font=("Helvetica", 12), bg="#34495e", fg="#ecf0f1").pack()
+        alarm_volume_scale = tk.Scale(alarm_vol_frame, from_=0, to=100, 
+                                     orient=tk.HORIZONTAL, 
+                                     bg="#2c3e50", fg="#ecf0f1", 
+                                     highlightthickness=0,
+                                     troughcolor="#34495e", 
+                                     activebackground="#e74c3c",
+                                     length=200)
+        alarm_volume_scale.set(int(self.alarm_volume * 100))
+        alarm_volume_scale.pack(pady=5)
+        
         # Save and Cancel buttons
         button_frame = tk.Frame(settings_window, bg="#34495e")
         button_frame.pack(pady=30)
@@ -259,6 +299,14 @@ class GoodDayToLearnApp:
                 self.work_time = work_mins * 60
                 self.short_break_time = short_mins * 60
                 self.long_break_time = long_mins * 60
+                
+                # Update volume settings
+                self.music_volume = music_volume_scale.get() / 100.0
+                self.alarm_volume = alarm_volume_scale.get() / 100.0
+                
+                # Apply volume changes
+                pygame.mixer.music.set_volume(self.music_volume)
+                self.alarm_sound.set_volume(self.alarm_volume)
                 
                 # Reset timer if not running
                 if not self.running:
