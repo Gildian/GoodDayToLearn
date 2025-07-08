@@ -7,7 +7,7 @@ echo "Creating standalone GoodDayToLearn app..."
 source .venv/bin/activate
 
 # Create the app using PyInstaller
-pyinstaller --onedir --windowed --name "GoodDayToLearn" --add-data "rain.mp3:." GoodDayToLearn.py
+pyinstaller --onedir --windowed --name "GoodDayToLearn" --add-data "rain.wav:." GoodDayToLearn.py
 
 echo "App created successfully!"
 echo "You can find your app at: dist/GoodDayToLearn.app"

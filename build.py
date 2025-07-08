@@ -18,8 +18,11 @@ def build_app():
         print("❌ Error: GoodDayToLearn.py not found!")
         return False
     
-    if not os.path.exists("rain.mp3"):
-        print("⚠️  Warning: rain.mp3 not found! Audio won't work.")
+    if not os.path.exists("rain.wav"):
+        print("⚠️  Warning: rain.wav not found! Audio won't work.")
+    
+    if not os.path.exists("alarm.wav"):
+        print("⚠️  Warning: alarm.wav not found! Alarm won't work.")
     
     # Determine the appropriate command based on platform
     system = platform.system()
@@ -30,8 +33,9 @@ def build_app():
             "--onedir",
             "--windowed",
             "--name", "GoodDayToLearn",
-            "--add-data", "rain.mp3:.",
-            "GoodDayToLearn.py"
+            "--add-data", "rain.wav:.",
+            "--add-data", "alarm.wav:.",
+            "main.py"
         ]
         output_location = "dist/GoodDayToLearn.app"
     elif system == "Windows":
@@ -40,8 +44,9 @@ def build_app():
             "--onefile",
             "--windowed",
             "--name", "GoodDayToLearn",
-            "--add-data", "rain.mp3;.",
-            "GoodDayToLearn.py"
+            "--add-data", "rain.wav;.",
+            "--add-data", "alarm.wav;.",
+            "main.py"
         ]
         output_location = "dist/GoodDayToLearn.exe"
     else:  # Linux
@@ -50,8 +55,9 @@ def build_app():
             "--onefile",
             "--windowed",
             "--name", "GoodDayToLearn",
-            "--add-data", "rain.mp3:.",
-            "GoodDayToLearn.py"
+            "--add-data", "rain.wav:.",
+            "--add-data", "alarm.wav:.",
+            "main.py"
         ]
         output_location = "dist/GoodDayToLearn"
     
