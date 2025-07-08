@@ -97,7 +97,7 @@ class GoodDayToLearnApp:
         pygame.mixer.music.set_volume(self.music_volume)  # Set initial music volume
         
         # Load alarm sound
-        self.alarm_sound = pygame.mixer.Sound("alarm.mp3")
+        self.alarm_sound = pygame.mixer.Sound("alarm.wav")
         self.alarm_sound.set_volume(self.alarm_volume)  # Set initial alarm volume
 
     def start_timer(self):
@@ -159,8 +159,7 @@ class GoodDayToLearnApp:
             self.is_break = False
             self.time_left = self.work_time
             self.label.config(text="Back to Work!")
-            # Start playing music again when returning to work
-            pygame.mixer.music.play(-1)
+            # Don't automatically start music - wait for user to press Start
         
         self.update_display()
         self.update_status_label()
