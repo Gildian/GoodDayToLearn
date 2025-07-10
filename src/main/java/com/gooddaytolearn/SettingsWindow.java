@@ -50,25 +50,39 @@ public class SettingsWindow extends JDialog {
     }
     
     /**
-     * Create all widgets for the settings window.
+     * Create all widgets for the settings window with modern styling.
      */
     private void createWidgets() {
         setLayout(new BorderLayout());
         
-        // Title
+        // Title with modern typography
         JLabel titleLabel = new JLabel("Timer Settings", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        titleLabel.setFont(new Font("SF Pro Display", Font.BOLD, 20));
         titleLabel.setForeground(AppConfig.COLORS.get("text_primary"));
-        titleLabel.setBorder(new EmptyBorder(20, 0, 20, 0));
+        titleLabel.setBorder(new EmptyBorder(25, 0, 25, 0));
         add(titleLabel, BorderLayout.NORTH);
         
-        // Settings panel
-        JPanel settingsPanel = new JPanel(new GridBagLayout());
-        settingsPanel.setBackground(AppConfig.COLORS.get("settings_bg"));
-        settingsPanel.setBorder(new EmptyBorder(0, 30, 20, 30));
+        // Settings panel with modern card-like appearance
+        JPanel settingsPanel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw rounded card background
+                g2d.setColor(AppConfig.COLORS.get("panel_bg"));
+                g2d.fillRoundRect(10, 10, getWidth() - 20, getHeight() - 20, 16, 16);
+                
+                // Add subtle border
+                g2d.setColor(AppConfig.COLORS.get("border_color"));
+                g2d.drawRoundRect(10, 10, getWidth() - 20, getHeight() - 20, 16, 16);
+            }
+        };
+        settingsPanel.setOpaque(false);
+        settingsPanel.setBorder(new EmptyBorder(20, 40, 20, 40));
         
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
         
         // Timer settings
@@ -148,21 +162,20 @@ public class SettingsWindow extends JDialog {
     }
     
     /**
-     * Add action buttons.
+     * Add modern action buttons.
      */
     private void addButtons() {
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         buttonPanel.setBackground(AppConfig.COLORS.get("settings_bg"));
+        buttonPanel.setBorder(new EmptyBorder(20, 0, 25, 0));
         
         // Save button
-        JButton saveButton = createButton("Save", AppConfig.COLORS.get("button_green"), 
-                AppConfig.COLORS.get("button_green_active"));
+        JButton saveButton = createModernButton("Save", "button_green", "button_green_active");
         saveButton.addActionListener(e -> saveSettings());
         buttonPanel.add(saveButton);
         
         // Cancel button
-        JButton cancelButton = createButton("Cancel", AppConfig.COLORS.get("button_red"), 
-                AppConfig.COLORS.get("button_red_active"));
+        JButton cancelButton = createModernButton("Cancel", "button_red", "button_red_active");
         cancelButton.addActionListener(e -> dispose());
         buttonPanel.add(cancelButton);
         
@@ -170,65 +183,93 @@ public class SettingsWindow extends JDialog {
     }
     
     /**
-     * Create a styled label.
+     * Create a modern styled button for settings window.
+     */
+    private JButton createModernButton(String text, String bgColorKey, String activeColorKey) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw rounded background
+                Color bgColor = getModel().isPressed() || getModel().isRollover() ? 
+                    AppConfig.COLORS.get(activeColorKey) : AppConfig.COLORS.get(bgColorKey);
+                g2d.setColor(bgColor);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw text
+                FontMetrics fm = g2d.getFontMetrics();
+                int textX = (getWidth() - fm.stringWidth(getText())) / 2;
+                int textY = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                
+                g2d.setColor(getForeground());
+                g2d.drawString(getText(), textX, textY);
+            }
+        };
+        
+        button.setFont(new Font("SF Pro Text", Font.BOLD, 13));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setPreferredSize(new Dimension(80, 35));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        return button;
+    }
+    
+    /**
+     * Create a styled label with modern typography.
      */
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setForeground(AppConfig.COLORS.get("text_primary"));
-        label.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        label.setFont(new Font("SF Pro Text", Font.PLAIN, 13));
         return label;
     }
     
     /**
-     * Style a spinner component.
+     * Style a spinner component with dark theme.
      */
     private void styleSpinner(JSpinner spinner) {
-        spinner.setPreferredSize(new Dimension(80, 25));
+        spinner.setPreferredSize(new Dimension(90, 30));
+        
+        // Style the editor
         JComponent editor = spinner.getEditor();
         if (editor instanceof JSpinner.DefaultEditor) {
-            ((JSpinner.DefaultEditor) editor).getTextField().setBackground(Color.WHITE);
+            JTextField textField = ((JSpinner.DefaultEditor) editor).getTextField();
+            textField.setBackground(AppConfig.COLORS.get("button_bg"));
+            textField.setForeground(AppConfig.COLORS.get("text_primary"));
+            textField.setCaretColor(AppConfig.COLORS.get("text_primary"));
+            textField.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+        }
+        
+        // Style the spinner buttons
+        for (Component comp : spinner.getComponents()) {
+            if (comp instanceof JButton) {
+                JButton button = (JButton) comp;
+                button.setBackground(AppConfig.COLORS.get("button_bg"));
+                button.setForeground(AppConfig.COLORS.get("text_primary"));
+                button.setBorder(BorderFactory.createEmptyBorder());
+            }
         }
     }
     
     /**
-     * Style a slider component.
+     * Style a slider component with modern dark theme.
      */
     private void styleSlider(JSlider slider) {
-        slider.setBackground(AppConfig.COLORS.get("settings_bg"));
+        slider.setOpaque(false);
         slider.setForeground(AppConfig.COLORS.get("text_primary"));
-        slider.setPaintTicks(true);
-        slider.setPaintLabels(true);
+        slider.setPaintTicks(false);
+        slider.setPaintLabels(false);
         slider.setMajorTickSpacing(25);
         slider.setMinorTickSpacing(5);
-    }
-    
-    /**
-     * Create a styled button.
-     */
-    private JButton createButton(String text, Color bgColor, Color activeColor) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("SansSerif", Font.BOLD, 12));
-        button.setBackground(bgColor);
-        button.setForeground(Color.BLACK);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setPreferredSize(new Dimension(80, 30));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Add hover effect
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(activeColor);
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(bgColor);
-            }
-        });
-        
-        return button;
+        // Set custom UI for better dark theme support
+        slider.putClientProperty("Slider.trackColor", AppConfig.COLORS.get("slider_track"));
+        slider.putClientProperty("Slider.thumbColor", AppConfig.COLORS.get("accent_primary"));
     }
     
     /**

@@ -15,26 +15,53 @@ public class AppConfig {
     public static final int WINDOW_HEIGHT = 450;
     public static final boolean WINDOW_RESIZABLE = false;
     
-    // Color scheme
+    // Modern Dark Theme Color Scheme
     public static final Map<String, Color> COLORS = new HashMap<>();
     static {
-        COLORS.put("background", new Color(44, 62, 80));           // Dark blue-gray
-        COLORS.put("text_primary", new Color(236, 240, 241));      // Light gray
-        COLORS.put("text_secondary", new Color(189, 195, 199));    // Medium gray
-        COLORS.put("text_muted", new Color(149, 165, 166));        // Muted gray
-        COLORS.put("work_time", new Color(231, 76, 60));           // Red
-        COLORS.put("break_time", new Color(243, 156, 18));         // Orange
-        COLORS.put("button_green", new Color(39, 174, 96));        // Green
-        COLORS.put("button_green_active", new Color(46, 204, 113));
-        COLORS.put("button_red", new Color(231, 76, 60));          // Red
-        COLORS.put("button_red_active", new Color(192, 57, 43));
-        COLORS.put("button_blue", new Color(52, 152, 219));        // Blue
-        COLORS.put("button_blue_active", new Color(41, 128, 185));
-        COLORS.put("button_purple", new Color(155, 89, 182));      // Purple
-        COLORS.put("button_purple_active", new Color(142, 68, 173));
-        COLORS.put("settings_bg", new Color(52, 73, 94));          // Darker gray
-        COLORS.put("slider_active_blue", new Color(52, 152, 219));
-        COLORS.put("slider_active_red", new Color(231, 76, 60));
+        // Background colors - Deep dark with subtle blue undertones
+        COLORS.put("background", new Color(18, 18, 20));           // Almost black with slight blue
+        COLORS.put("settings_bg", new Color(22, 22, 25));          // Slightly lighter for settings
+        COLORS.put("panel_bg", new Color(28, 28, 32));             // Card/panel background
+        COLORS.put("button_bg", new Color(38, 38, 42));            // Button base background
+        
+        // Text colors - High contrast with modern hierarchy
+        COLORS.put("text_primary", new Color(255, 255, 255));      // Pure white for main text
+        COLORS.put("text_secondary", new Color(200, 200, 205));    // Slightly dimmed white
+        COLORS.put("text_muted", new Color(140, 140, 150));        // Muted gray for secondary info
+        COLORS.put("text_accent", new Color(120, 120, 128));       // Very muted for hints
+        
+        // Timer state colors - Vibrant but not harsh
+        COLORS.put("work_time", new Color(255, 95, 95));           // Soft red for work time
+        COLORS.put("break_time", new Color(100, 210, 255));        // Bright blue for break time
+        COLORS.put("timer_glow", new Color(80, 200, 255, 20));     // Subtle glow effect
+        
+        // Modern button colors with better accessibility
+        COLORS.put("button_green", new Color(46, 204, 113));       // Bright green
+        COLORS.put("button_green_active", new Color(39, 174, 96)); // Darker on hover
+        COLORS.put("button_green_text", new Color(255, 255, 255)); // White text
+        
+        COLORS.put("button_red", new Color(255, 95, 95));          // Soft red
+        COLORS.put("button_red_active", new Color(230, 70, 70));   // Darker on hover
+        COLORS.put("button_red_text", new Color(255, 255, 255));   // White text
+        
+        COLORS.put("button_blue", new Color(100, 170, 255));       // Modern blue
+        COLORS.put("button_blue_active", new Color(80, 150, 235)); // Darker on hover
+        COLORS.put("button_blue_text", new Color(255, 255, 255));  // White text
+        
+        COLORS.put("button_purple", new Color(155, 135, 255));     // Modern purple
+        COLORS.put("button_purple_active", new Color(135, 115, 235)); // Darker on hover
+        COLORS.put("button_purple_text", new Color(255, 255, 255)); // White text
+        
+        // Accent and highlight colors
+        COLORS.put("accent_primary", new Color(100, 170, 255));    // Primary brand blue
+        COLORS.put("accent_secondary", new Color(155, 135, 255));  // Secondary purple
+        COLORS.put("border_color", new Color(55, 55, 60));         // Subtle borders
+        COLORS.put("hover_overlay", new Color(255, 255, 255, 8)); // Subtle hover effect
+        
+        // Slider colors
+        COLORS.put("slider_active_blue", new Color(100, 170, 255));
+        COLORS.put("slider_active_red", new Color(255, 95, 95));
+        COLORS.put("slider_track", new Color(45, 45, 50));         // Slider track background
     }
     
     // Timer defaults (in seconds)
