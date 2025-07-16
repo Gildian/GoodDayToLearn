@@ -17,6 +17,7 @@ public class GoodDayToLearnApp extends JFrame {
     private JLabel clockLabel;
     private JLabel timerLabel;
     private JLabel statusLabel;
+    private JLabel cyclesLabel;
     private JButton startButton;
     private JButton stopButton;
     private JButton resetButton;
@@ -97,12 +98,6 @@ public class GoodDayToLearnApp extends JFrame {
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(titleLabel);
         
-        // Subtitle with better spacing
-        JLabel subtitleLabel = new JLabel("Focus • Productivity • Growth", SwingConstants.CENTER);
-        subtitleLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
-        subtitleLabel.setForeground(AppConfig.COLORS.get("text_muted"));
-        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        mainPanel.add(subtitleLabel);
         
         mainPanel.add(Box.createVerticalStrut(20));
         
@@ -149,7 +144,16 @@ public class GoodDayToLearnApp extends JFrame {
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         mainPanel.add(statusLabel);
         
-        mainPanel.add(Box.createVerticalStrut(40));
+        mainPanel.add(Box.createVerticalStrut(10));
+        
+        // Completed cycles counter
+        cyclesLabel = new JLabel("Completed Cycles: 0", SwingConstants.CENTER);
+        cyclesLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 14));
+        cyclesLabel.setForeground(AppConfig.COLORS.get("text_muted"));
+        cyclesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mainPanel.add(cyclesLabel);
+        
+        mainPanel.add(Box.createVerticalStrut(30));
         
         // Control buttons
         createControlButtons(mainPanel);
@@ -321,6 +325,7 @@ public class GoodDayToLearnApp extends JFrame {
     private void updateDisplay() {
         updateTimerDisplay();
         updateStatusDisplay();
+        updateCyclesDisplay();
     }
     
     /**
@@ -337,18 +342,22 @@ public class GoodDayToLearnApp extends JFrame {
         }
     }
     
-    /**
+        /**
      * Update the status display.
      */
     private void updateStatusDisplay() {
         String statusText = timer.getStatusText();
         statusLabel.setText(statusText);
         
-        // Update status color
-        if (timer.isBreak()) {
-            statusLabel.setForeground(AppConfig.COLORS.get("break_time"));
-        } else {
-            statusLabel.setForeground(AppConfig.COLORS.get("text_muted"));
-        }
+        // Update status color - minimal approach
+        statusLabel.setForeground(AppConfig.COLORS.get("text_muted"));
+    }
+    
+    /**
+     * Update the completed cycles display.
+     */
+    private void updateCyclesDisplay() {
+        int completedCycles = timer.getCompletedCycles();
+        cyclesLabel.setText("Completed Cycles: " + completedCycles);
     }
 }

@@ -15,6 +15,7 @@ public class PomodoroTimer {
     
     private int timeLeft;
     private int currentInterval; // Track current interval (0-3)
+    private int completedCycles; // Track completed 4/4 cycles
     private boolean isBreak;
     private boolean running;
     
@@ -38,6 +39,7 @@ public class PomodoroTimer {
         
         this.timeLeft = this.workTime;
         this.currentInterval = 0;
+        this.completedCycles = 0;
         this.isBreak = false;
         this.running = false;
         
@@ -82,6 +84,7 @@ public class PomodoroTimer {
             timer = null;
         }
         currentInterval = 0;
+        completedCycles = 0;
         isBreak = false;
         timeLeft = workTime;
     }
@@ -113,6 +116,7 @@ public class PomodoroTimer {
                 isBreak = true;
                 timeLeft = longBreakTime;
                 currentInterval = 0; // Reset interval counter
+                completedCycles++; // Increment completed cycles
             } else {
                 // Time for short break
                 isBreak = true;
@@ -208,5 +212,9 @@ public class PomodoroTimer {
     
     public int getLongBreakMinutes() {
         return longBreakTime / 60;
+    }
+    
+    public int getCompletedCycles() {
+        return completedCycles;
     }
 }
