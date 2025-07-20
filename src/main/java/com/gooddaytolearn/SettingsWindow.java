@@ -2,7 +2,9 @@ package com.gooddaytolearn;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
 
 /**
  * Settings window for configuring timer and audio settings.
@@ -18,6 +20,14 @@ public class SettingsWindow extends JDialog {
     private JSpinner longBreakSpinner;
     private JSlider musicVolumeSlider;
     private JSlider alarmVolumeSlider;
+    
+    // Custom sound file components
+    private JLabel customMusicLabel;
+    private JButton selectMusicButton;
+    private JButton resetMusicButton;
+    private JLabel customAlarmLabel;
+    private JButton selectAlarmButton;
+    private JButton resetAlarmButton;
     
     /**
      * Initialize the settings window.
@@ -137,25 +147,85 @@ public class SettingsWindow extends JDialog {
      * Add audio settings controls.
      */
     private void addAudioSettings(JPanel panel, GridBagConstraints gbc) {
-        // Music volume
+        // Custom music file section
         gbc.gridx = 0; gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
+        JLabel customMusicSectionLabel = createLabel("Custom Background Music:");
+        customMusicSectionLabel.setFont(new Font("SF Pro Text", Font.BOLD, 13));
+        panel.add(customMusicSectionLabel, gbc);
+        
+        // Music file display and controls
+        gbc.gridy = 4;
+        JPanel musicFilePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        musicFilePanel.setOpaque(false);
+        
+        customMusicLabel = new JLabel(getMusicFileName());
+        customMusicLabel.setForeground(AppConfig.COLORS.get("text_secondary"));
+        customMusicLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 12));
+        musicFilePanel.add(customMusicLabel);
+        
+        musicFilePanel.add(Box.createHorizontalStrut(10));
+        
+        selectMusicButton = createSmallButton("Browse...");
+        selectMusicButton.addActionListener(e -> selectCustomMusicFile());
+        musicFilePanel.add(selectMusicButton);
+        
+        musicFilePanel.add(Box.createHorizontalStrut(5));
+        
+        resetMusicButton = createSmallButton("Reset");
+        resetMusicButton.addActionListener(e -> resetMusicToDefault());
+        musicFilePanel.add(resetMusicButton);
+        
+        panel.add(musicFilePanel, gbc);
+        
+        // Music volume
+        gbc.gridy = 5;
         JLabel musicVolumeLabel = createLabel("Music Volume:");
         panel.add(musicVolumeLabel, gbc);
         
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         musicVolumeSlider = new JSlider(0, 100, (int)(audioManager.getMusicVolume() * 100));
         styleSlider(musicVolumeSlider);
         panel.add(musicVolumeSlider, gbc);
         
+        // Custom alarm file section
+        gbc.gridy = 7;
+        JLabel customAlarmSectionLabel = createLabel("Custom Alarm Sound:");
+        customAlarmSectionLabel.setFont(new Font("SF Pro Text", Font.BOLD, 13));
+        panel.add(customAlarmSectionLabel, gbc);
+        
+        // Alarm file display and controls
+        gbc.gridy = 8;
+        JPanel alarmFilePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        alarmFilePanel.setOpaque(false);
+        
+        customAlarmLabel = new JLabel(getAlarmFileName());
+        customAlarmLabel.setForeground(AppConfig.COLORS.get("text_secondary"));
+        customAlarmLabel.setFont(new Font("SF Pro Text", Font.PLAIN, 12));
+        alarmFilePanel.add(customAlarmLabel);
+        
+        alarmFilePanel.add(Box.createHorizontalStrut(10));
+        
+        selectAlarmButton = createSmallButton("Browse...");
+        selectAlarmButton.addActionListener(e -> selectCustomAlarmFile());
+        alarmFilePanel.add(selectAlarmButton);
+        
+        alarmFilePanel.add(Box.createHorizontalStrut(5));
+        
+        resetAlarmButton = createSmallButton("Reset");
+        resetAlarmButton.addActionListener(e -> resetAlarmToDefault());
+        alarmFilePanel.add(resetAlarmButton);
+        
+        panel.add(alarmFilePanel, gbc);
+        
         // Alarm volume
-        gbc.gridy = 5;
+        gbc.gridy = 9;
         JLabel alarmVolumeLabel = createLabel("Alarm Volume:");
         panel.add(alarmVolumeLabel, gbc);
         
-        gbc.gridy = 6;
+        gbc.gridy = 10;
         alarmVolumeSlider = new JSlider(0, 100, (int)(audioManager.getAlarmVolume() * 100));
         styleSlider(alarmVolumeSlider);
         panel.add(alarmVolumeSlider, gbc);
@@ -291,5 +361,135 @@ public class SettingsWindow extends JDialog {
         }
         
         dispose();
+    }
+    
+    /**
+     * Create a smaller button for file selection.
+     */
+    private JButton createSmallButton(String text) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw rounded background
+                Color bgColor = getModel().isPressed() || getModel().isRollover() ? 
+                    AppConfig.COLORS.get("button_blue_active") : AppConfig.COLORS.get("button_blue");
+                g2d.setColor(bgColor);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
+                
+                // Draw text
+                FontMetrics fm = g2d.getFontMetrics();
+                int textX = (getWidth() - fm.stringWidth(getText())) / 2;
+                int textY = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                
+                g2d.setColor(getForeground());
+                g2d.drawString(getText(), textX, textY);
+            }
+        };
+        
+        button.setFont(new Font("SF Pro Text", Font.PLAIN, 11));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setPreferredSize(new Dimension(60, 25));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        return button;
+    }
+    
+    /**
+     * Get the display name for the current music file.
+     */
+    private String getMusicFileName() {
+        String customFile = audioManager.getCustomMusicFile();
+        if (customFile != null) {
+            return new File(customFile).getName();
+        }
+        return "Default (rain.wav)";
+    }
+    
+    /**
+     * Get the display name for the current alarm file.
+     */
+    private String getAlarmFileName() {
+        String customFile = audioManager.getCustomAlarmFile();
+        if (customFile != null) {
+            return new File(customFile).getName();
+        }
+        return "Default (alarm.wav)";
+    }
+    
+    /**
+     * Open file chooser to select custom music file.
+     */
+    private void selectCustomMusicFile() {
+        JFileChooser fileChooser = createAudioFileChooser();
+        fileChooser.setDialogTitle("Select Background Music File");
+        
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            audioManager.setCustomMusicFile(selectedFile.getAbsolutePath());
+            customMusicLabel.setText(selectedFile.getName());
+        }
+    }
+    
+    /**
+     * Open file chooser to select custom alarm file.
+     */
+    private void selectCustomAlarmFile() {
+        JFileChooser fileChooser = createAudioFileChooser();
+        fileChooser.setDialogTitle("Select Alarm Sound File");
+        
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            audioManager.setCustomAlarmFile(selectedFile.getAbsolutePath());
+            customAlarmLabel.setText(selectedFile.getName());
+        }
+    }
+    
+    /**
+     * Reset music to default.
+     */
+    private void resetMusicToDefault() {
+        audioManager.resetMusicToDefault();
+        customMusicLabel.setText("Default (rain.wav)");
+    }
+    
+    /**
+     * Reset alarm to default.
+     */
+    private void resetAlarmToDefault() {
+        audioManager.resetAlarmToDefault();
+        customAlarmLabel.setText("Default (alarm.wav)");
+    }
+    
+    /**
+     * Create a file chooser configured for audio files.
+     */
+    private JFileChooser createAudioFileChooser() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        
+        // Add audio file filters
+        FileNameExtensionFilter audioFilter = new FileNameExtensionFilter(
+            "Audio Files (*.wav, *.mp3, *.aiff, *.au)", 
+            "wav", "mp3", "aiff", "au"
+        );
+        FileNameExtensionFilter wavFilter = new FileNameExtensionFilter("WAV Files (*.wav)", "wav");
+        FileNameExtensionFilter mp3Filter = new FileNameExtensionFilter("MP3 Files (*.mp3)", "mp3");
+        FileNameExtensionFilter aiffFilter = new FileNameExtensionFilter("AIFF Files (*.aiff)", "aiff");
+        FileNameExtensionFilter auFilter = new FileNameExtensionFilter("AU Files (*.au)", "au");
+        
+        fileChooser.addChoosableFileFilter(audioFilter);
+        fileChooser.addChoosableFileFilter(wavFilter);
+        fileChooser.addChoosableFileFilter(mp3Filter);
+        fileChooser.addChoosableFileFilter(aiffFilter);
+        fileChooser.addChoosableFileFilter(auFilter);
+        fileChooser.setFileFilter(audioFilter);
+        
+        return fileChooser;
     }
 }

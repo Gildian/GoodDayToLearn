@@ -1,6 +1,7 @@
 package com.gooddaytolearn;
 
 import javax.sound.sampled.*;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -13,6 +14,10 @@ public class AudioManager {
     private double alarmVolume;
     private Clip musicClip;
     private Clip alarmClip;
+    
+    // Custom file paths for user-selected sounds
+    private String customMusicFile;
+    private String customAlarmFile;
     
     /**
      * Initialize the audio manager.
@@ -28,14 +33,16 @@ public class AudioManager {
      */
     private void loadAudioFiles() {
         try {
-            // Load background music
-            musicClip = loadAudioClip(AppConfig.MUSIC_FILE);
+            // Load background music (try custom file first, then default)
+            String musicPath = customMusicFile != null ? customMusicFile : AppConfig.MUSIC_FILE;
+            musicClip = loadAudioClip(musicPath, customMusicFile != null);
             if (musicClip != null) {
                 setClipVolume(musicClip, musicVolume);
             }
             
-            // Load alarm sound
-            alarmClip = loadAudioClip(AppConfig.ALARM_FILE);
+            // Load alarm sound (try custom file first, then default)
+            String alarmPath = customAlarmFile != null ? customAlarmFile : AppConfig.ALARM_FILE;
+            alarmClip = loadAudioClip(alarmPath, customAlarmFile != null);
             if (alarmClip != null) {
                 setClipVolume(alarmClip, alarmVolume);
             }
@@ -45,26 +52,40 @@ public class AudioManager {
     }
     
     /**
-     * Load an audio clip from resources.
+     * Load an audio clip from resources or external file.
      */
-    private Clip loadAudioClip(String resourcePath) {
+    private Clip loadAudioClip(String audioPath, boolean isExternalFile) {
         try {
-            InputStream audioStream = getClass().getResourceAsStream(resourcePath);
-            if (audioStream == null) {
-                System.err.println("Audio file not found: " + resourcePath);
-                return null;
+            AudioInputStream audioInputStream;
+            
+            if (isExternalFile) {
+                // Load from external file
+                File audioFile = new File(audioPath);
+                if (!audioFile.exists()) {
+                    System.err.println("External audio file not found: " + audioPath);
+                    return null;
+                }
+                audioInputStream = AudioSystem.getAudioInputStream(audioFile);
+            } else {
+                // Load from resources
+                InputStream audioStream = getClass().getResourceAsStream(audioPath);
+                if (audioStream == null) {
+                    System.err.println("Resource audio file not found: " + audioPath);
+                    return null;
+                }
+                
+                // Create a BufferedInputStream to support mark/reset
+                InputStream bufferedStream = audioStream.markSupported() ? 
+                    audioStream : new java.io.BufferedInputStream(audioStream);
+                
+                audioInputStream = AudioSystem.getAudioInputStream(bufferedStream);
             }
             
-            // Create a BufferedInputStream to support mark/reset
-            InputStream bufferedStream = audioStream.markSupported() ? 
-                audioStream : new java.io.BufferedInputStream(audioStream);
-            
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream);
             Clip clip = AudioSystem.getClip();
             clip.open(audioInputStream);
             return clip;
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            System.err.println("Error loading audio clip " + resourcePath + ": " + e.getMessage());
+            System.err.println("Error loading audio clip " + audioPath + ": " + e.getMessage());
             return null;
         }
     }
@@ -149,6 +170,91 @@ public class AudioManager {
      */
     public double getAlarmVolume() {
         return alarmVolume;
+    }
+    
+    /**
+     * Set custom music file path.
+     */
+    public void setCustomMusicFile(String filePath) {
+        this.customMusicFile = filePath;
+        reloadMusicFile();
+    }
+    
+    /**
+     * Set custom alarm file path.
+     */
+    public void setCustomAlarmFile(String filePath) {
+        this.customAlarmFile = filePath;
+        reloadAlarmFile();
+    }
+    
+    /**
+     * Get current custom music file path.
+     */
+    public String getCustomMusicFile() {
+        return customMusicFile;
+    }
+    
+    /**
+     * Get current custom alarm file path.
+     */
+    public String getCustomAlarmFile() {
+        return customAlarmFile;
+    }
+    
+    /**
+     * Reset music file to default.
+     */
+    public void resetMusicToDefault() {
+        this.customMusicFile = null;
+        reloadMusicFile();
+    }
+    
+    /**
+     * Reset alarm file to default.
+     */
+    public void resetAlarmToDefault() {
+        this.customAlarmFile = null;
+        reloadAlarmFile();
+    }
+    
+    /**
+     * Reload the music file.
+     */
+    private void reloadMusicFile() {
+        // Stop current music if playing
+        if (musicClip != null && musicClip.isRunning()) {
+            musicClip.stop();
+        }
+        
+        // Close old clip
+        if (musicClip != null) {
+            musicClip.close();
+        }
+        
+        // Load new music file
+        String musicPath = customMusicFile != null ? customMusicFile : AppConfig.MUSIC_FILE;
+        musicClip = loadAudioClip(musicPath, customMusicFile != null);
+        if (musicClip != null) {
+            setClipVolume(musicClip, musicVolume);
+        }
+    }
+    
+    /**
+     * Reload the alarm file.
+     */
+    private void reloadAlarmFile() {
+        // Close old clip
+        if (alarmClip != null) {
+            alarmClip.close();
+        }
+        
+        // Load new alarm file
+        String alarmPath = customAlarmFile != null ? customAlarmFile : AppConfig.ALARM_FILE;
+        alarmClip = loadAudioClip(alarmPath, customAlarmFile != null);
+        if (alarmClip != null) {
+            setClipVolume(alarmClip, alarmVolume);
+        }
     }
     
     /**

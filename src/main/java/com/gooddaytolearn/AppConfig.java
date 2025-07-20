@@ -73,15 +73,19 @@ public class AppConfig {
     public static final double DEFAULT_MUSIC_VOLUME = 0.5;
     public static final double DEFAULT_ALARM_VOLUME = 0.7;
     
-    // Audio files
-    public static final String MUSIC_FILE = "/rain.wav";
-    public static final String ALARM_FILE = "/alarm.wav";
+    // Default audio files (resources)
+    public static final String DEFAULT_MUSIC_FILE = "/rain.wav";
+    public static final String DEFAULT_ALARM_FILE = "/alarm.wav";
+    
+    // Audio files - can be overridden by user settings
+    public static String MUSIC_FILE = DEFAULT_MUSIC_FILE;
+    public static String ALARM_FILE = DEFAULT_ALARM_FILE;
     
     // Timer validation limits
     public static final int MIN_WORK_TIME = 1;      // minutes
     public static final int MAX_WORK_TIME = 120;    // minutes
     
     // Settings window dimensions
-    public static final int SETTINGS_WINDOW_WIDTH = 400;
-    public static final int SETTINGS_WINDOW_HEIGHT = 350;
+    public static final int SETTINGS_WINDOW_WIDTH = 450;
+    public static final int SETTINGS_WINDOW_HEIGHT = 450;
 }
