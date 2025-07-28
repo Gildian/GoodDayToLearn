@@ -2,8 +2,10 @@ package com.gooddaytolearn;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 
 /**
  * Main application window and UI components.
@@ -12,6 +14,8 @@ public class GoodDayToLearnApp extends JFrame {
     
     private AudioManager audioManager;
     private PomodoroTimer timer;
+    private TrayIcon trayIcon;
+    private SystemTray systemTray;
     
     // UI Components
     private JLabel clockLabel;
@@ -38,14 +42,24 @@ public class GoodDayToLearnApp extends JFrame {
         
         // Create UI
         createWidgets();
+        setupKeyboardShortcuts();
+        setupSystemTray();
         updateDisplay();
         
         // Setup window close behavior
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                audioManager.cleanup();
-                System.exit(0);
+                if (systemTray != null && trayIcon != null) {
+                    setVisible(false);
+                    trayIcon.displayMessage("Good Day To Learn", 
+                        "Application minimized to tray. Right-click tray icon for options.", 
+                        TrayIcon.MessageType.INFO);
+                } else {
+                    audioManager.cleanup();
+                    System.exit(0);
+                }
             }
         });
     }
@@ -118,6 +132,11 @@ public class GoodDayToLearnApp extends JFrame {
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 
+                // Draw progress ring
+                if (timer != null) {
+                    drawProgressRing(g2d);
+                }
+                
                 // Add subtle glow effect around timer
                 Color glowColor = timer != null && timer.isBreak() ? 
                     new Color(100, 210, 255, 15) : new Color(255, 95, 95, 15);
@@ -127,6 +146,39 @@ public class GoodDayToLearnApp extends JFrame {
                 }
                 
                 super.paintComponent(g);
+            }
+            
+            private void drawProgressRing(Graphics2D g2d) {
+                int centerX = getWidth() / 2;
+                int centerY = getHeight() / 2;
+                int radius = Math.min(getWidth(), getHeight()) / 2 - 20;
+                
+                // Calculate progress (simplified approach)
+                String timeDisplay = timer.getTimeDisplay();
+                String[] parts = timeDisplay.split(":");
+                double currentTime = Double.parseDouble(parts[0]) * 60 + Double.parseDouble(parts[1]);
+                
+                // Estimate total time based on timer state
+                double totalTime = timer.isBreak() ? 
+                    (timer.getShortBreakMinutes() * 60) : (timer.getWorkTimeMinutes() * 60);
+                
+                double progress = timer.isRunning() ? 1.0 - (currentTime / totalTime) : 0.0;
+                progress = Math.max(0.0, Math.min(1.0, progress)); // Clamp between 0 and 1
+                
+                // Draw background ring
+                g2d.setStroke(new BasicStroke(4.0f));
+                g2d.setColor(AppConfig.COLORS.get("slider_track"));
+                g2d.drawOval(centerX - radius, centerY - radius, radius * 2, radius * 2);
+                
+                // Draw progress ring
+                if (progress > 0) {
+                    g2d.setColor(timer.isBreak() ? 
+                        AppConfig.COLORS.get("break_time") : AppConfig.COLORS.get("work_time"));
+                    int startAngle = 90; // Start from top
+                    int arcAngle = (int) (360 * progress);
+                    g2d.drawArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 
+                               startAngle, -arcAngle);
+                }
             }
         };
         timerLabel.setFont(new Font("SF Pro Display", Font.BOLD, 64));
@@ -204,24 +256,36 @@ public class GoodDayToLearnApp extends JFrame {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // Draw rounded background
-                Color bgColor = getModel().isPressed() || getModel().isRollover() ? 
-                    AppConfig.COLORS.get(activeColorKey) : AppConfig.COLORS.get(bgColorKey);
+                // Determine button color based on state
+                Color bgColor;
+                if (!isEnabled()) {
+                    // Disabled state - use muted color
+                    bgColor = AppConfig.COLORS.get("button_bg");
+                } else if (getModel().isPressed() || getModel().isRollover()) {
+                    // Active/hover state
+                    bgColor = AppConfig.COLORS.get(activeColorKey);
+                } else {
+                    // Normal state
+                    bgColor = AppConfig.COLORS.get(bgColorKey);
+                }
+                
                 g2d.setColor(bgColor);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
                 
                 // Add subtle inner shadow when pressed
-                if (getModel().isPressed()) {
+                if (getModel().isPressed() && isEnabled()) {
                     g2d.setColor(new Color(0, 0, 0, 20));
                     g2d.fillRoundRect(1, 1, getWidth() - 2, getHeight() - 2, 11, 11);
                 }
                 
-                // Draw text
+                // Draw text with appropriate color
                 FontMetrics fm = g2d.getFontMetrics();
                 int textX = (getWidth() - fm.stringWidth(getText())) / 2;
                 int textY = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
                 
-                g2d.setColor(getForeground());
+                // Use different text color for disabled buttons
+                Color textColor = isEnabled() ? getForeground() : AppConfig.COLORS.get("text_muted");
+                g2d.setColor(textColor);
                 g2d.drawString(getText(), textX, textY);
             }
         };
@@ -251,6 +315,140 @@ public class GoodDayToLearnApp extends JFrame {
     }
     
     /**
+     * Setup keyboard shortcuts for better accessibility.
+     */
+    private void setupKeyboardShortcuts() {
+        // Create input and action maps
+        JRootPane rootPane = getRootPane();
+        
+        // Space bar to start/stop timer
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("SPACE"), "toggleTimer");
+        rootPane.getActionMap().put("toggleTimer", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (timer.isRunning()) {
+                    stopTimer();
+                } else {
+                    startTimer();
+                }
+            }
+        });
+        
+        // R key to reset timer
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("R"), "resetTimer");
+        rootPane.getActionMap().put("resetTimer", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetTimer();
+            }
+        });
+        
+        // S key to open settings (when timer is not running)
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("S"), "openSettings");
+        rootPane.getActionMap().put("openSettings", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!timer.isRunning()) {
+                    openSettings();
+                }
+            }
+        });
+        
+        // Escape key to stop timer
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(KeyStroke.getKeyStroke("ESCAPE"), "stopTimer");
+        rootPane.getActionMap().put("stopTimer", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (timer.isRunning()) {
+                    stopTimer();
+                }
+            }
+        });
+    }
+    
+    /**
+     * Setup system tray integration.
+     */
+    private void setupSystemTray() {
+        if (!SystemTray.isSupported()) {
+            System.out.println("System tray is not supported");
+            return;
+        }
+        
+        systemTray = SystemTray.getSystemTray();
+        
+        // Create tray icon image (simple colored circle) 
+        Image trayImage = createTrayIconImage();
+        
+        // Create popup menu
+        PopupMenu popup = new PopupMenu();
+        
+        MenuItem showItem = new MenuItem("Show");
+        showItem.addActionListener(e -> {
+            setVisible(true);
+            setState(JFrame.NORMAL);
+            toFront();
+        });
+        
+        MenuItem startStopItem = new MenuItem("Start/Stop");
+        startStopItem.addActionListener(e -> {
+            if (timer.isRunning()) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
+        });
+        
+        MenuItem exitItem = new MenuItem("Exit");
+        exitItem.addActionListener(e -> {
+            if (trayIcon != null) systemTray.remove(trayIcon);
+            audioManager.cleanup();
+            System.exit(0);
+        });
+        
+        popup.add(showItem);
+        popup.add(startStopItem);
+        popup.addSeparator();
+        popup.add(exitItem);
+        
+        // Create tray icon
+        trayIcon = new TrayIcon(trayImage, "Good Day To Learn", popup);
+        trayIcon.setImageAutoSize(true);
+        trayIcon.addActionListener(e -> {
+            setVisible(true);
+            setState(JFrame.NORMAL);
+            toFront();
+        });
+        
+        try {
+            systemTray.add(trayIcon);
+        } catch (AWTException e) {
+            System.err.println("Could not add system tray icon: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Create a simple tray icon image.
+     */
+    private Image createTrayIconImage() {
+        int size = 16;
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = image.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Draw a simple colored circle
+        g2d.setColor(AppConfig.COLORS.get("accent_primary"));
+        g2d.fillOval(2, 2, size - 4, size - 4);
+        
+        g2d.dispose();
+        return image;
+    }
+    
+    /**
      * Start the timer.
      */
     private void startTimer() {
@@ -260,6 +458,7 @@ public class GoodDayToLearnApp extends JFrame {
             if (!timer.isBreak()) {
                 audioManager.startMusic();
             }
+            updateDisplay(); // Update button states immediately
         }
     }
     
@@ -267,9 +466,11 @@ public class GoodDayToLearnApp extends JFrame {
      * Stop the timer.
      */
     private void stopTimer() {
-        timer.stop();
-        audioManager.stopMusic();
-        updateDisplay();
+        if (timer.isRunning()) {
+            timer.stop();
+            audioManager.stopMusic();
+            updateDisplay();
+        }
     }
     
     /**
@@ -306,7 +507,11 @@ public class GoodDayToLearnApp extends JFrame {
      * Handle timer updates during countdown.
      */
     private void onTimerUpdate(Integer timeLeft) {
-        SwingUtilities.invokeLater(this::updateTimerDisplay);
+        SwingUtilities.invokeLater(() -> {
+            updateTimerDisplay();
+            // Ensure progress ring updates
+            timerLabel.repaint();
+        });
     }
     
     /**
@@ -326,6 +531,31 @@ public class GoodDayToLearnApp extends JFrame {
         updateTimerDisplay();
         updateStatusDisplay();
         updateCyclesDisplay();
+        updateButtonStates();
+    }
+    
+    /**
+     * Update button states based on timer status.
+     */
+    private void updateButtonStates() {
+        boolean isRunning = timer.isRunning();
+        
+        // Enable/disable buttons based on timer state
+        startButton.setEnabled(!isRunning);
+        stopButton.setEnabled(isRunning);
+        resetButton.setEnabled(true); // Always enabled
+        settingsButton.setEnabled(!isRunning); // Disable settings during timer
+        
+        // Update button text based on state
+        if (!isRunning) {
+            if (timer.isBreak()) {
+                startButton.setText("Start Break");
+            } else {
+                startButton.setText("Start Work");
+            }
+        } else {
+            startButton.setText("Running...");
+        }
     }
     
     /**
