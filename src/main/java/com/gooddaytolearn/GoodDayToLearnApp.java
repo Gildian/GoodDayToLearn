@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Main application window and UI components.
@@ -27,6 +29,9 @@ public class GoodDayToLearnApp extends JFrame {
     private JButton resetButton;
     private JButton settingsButton;
     
+    // Clock functionality
+    private Timer clockTimer;
+    
     /**
      * Initialize the main application.
      */
@@ -44,6 +49,7 @@ public class GoodDayToLearnApp extends JFrame {
         createWidgets();
         setupKeyboardShortcuts();
         setupSystemTray();
+        startClock();
         updateDisplay();
         
         // Setup window close behavior
@@ -115,7 +121,7 @@ public class GoodDayToLearnApp extends JFrame {
         
         mainPanel.add(Box.createVerticalStrut(20));
         
-        // Real-time clock (placeholder for future feature)
+        // Real-time clock display
         clockLabel = new JLabel("", SwingConstants.CENTER);
         clockLabel.setFont(new Font("SF Mono", Font.PLAIN, 13));
         clockLabel.setForeground(AppConfig.COLORS.get("text_accent"));
@@ -589,5 +595,21 @@ public class GoodDayToLearnApp extends JFrame {
     private void updateCyclesDisplay() {
         int completedCycles = timer.getCompletedCycles();
         cyclesLabel.setText("Completed Cycles: " + completedCycles);
+    }
+    
+    /**
+     * Start the real-time clock display.
+     */
+    private void startClock() {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+        clockTimer = new Timer(1000, e -> {
+            String currentTime = timeFormat.format(new Date());
+            clockLabel.setText("Current Time: " + currentTime);
+        });
+        clockTimer.start();
+        
+        // Initial time display
+        String currentTime = timeFormat.format(new Date());
+        clockLabel.setText("Current Time: " + currentTime);
     }
 }
