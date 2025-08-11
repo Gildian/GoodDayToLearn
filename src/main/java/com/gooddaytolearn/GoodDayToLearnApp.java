@@ -80,6 +80,16 @@ public class GoodDayToLearnApp extends JFrame {
         setResizable(AppConfig.WINDOW_RESIZABLE);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
+
+        // macOS: unify title bar with window background
+        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
+            JRootPane root = getRootPane();
+            if (root != null) {
+                root.putClientProperty("apple.awt.fullWindowContent", true);
+                root.putClientProperty("apple.awt.transparentTitleBar", true);
+                root.putClientProperty("apple.awt.windowTitleVisible", false);
+            }
+        }
     }
     
     /**
@@ -555,9 +565,9 @@ public class GoodDayToLearnApp extends JFrame {
         // Update button text based on state
         if (!isRunning) {
             if (timer.isBreak()) {
-                startButton.setText("Start Break");
+                startButton.setText("Break");
             } else {
-                startButton.setText("Start Work");
+                startButton.setText("Start");
             }
         } else {
             startButton.setText("Running...");
